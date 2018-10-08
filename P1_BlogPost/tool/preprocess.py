@@ -63,8 +63,7 @@ def predict_category_value(data, columns, pred_column, algo, params, cv=2):
         cv: int
             It is uded to a parameter in GridSearchCV
     Results:
-        result: Series
-            pred_column value
+        pred_column value
     """
     data = data[columns + [pred_column]].copy()
     index_missing = data[pred_column].isnull()
