@@ -101,3 +101,42 @@ def predict_category_value(data, columns, pred_column, algo, params, cv=2):
     data.loc[index_missing, pred_column] = y_missing
     
     return data.loc[:, pred_column]
+
+def dummy_variables(data, columns, pred_column):
+    """Deal with the dummy variables
+    Convert the dummy variables into values
+
+    Parameters:
+        data: dataframe
+            original data
+        columns: list
+            List contains column those will be used to predict value
+        pred_column: string
+            Need to be predicted missing value in the column
+        algo: objects about algorithm
+            List contains algorithm that will be used to train the model,
+            and predict the missing value
+        params: dict
+            It is used to search the best parameters by gridsearchcv
+        cv: int
+            It is uded to a parameter in GridSearchCV
+    Results:
+        data: dataframe
+            Dummy variables is converted into values
+        index_missing: Index
+            pred_column with missing values index
+        index_train: Index
+            columns with non_missing values index is used to train model
+    """
+    data = data[columns + [pred_column]].copy()
+    index_missing = data[pred_column].isnull()
+    index_train = data[pred_column].notnull()
+
+    category_column = data[columns].select_dtypes("object").columns
+
+    for column in category_column:
+        data = data.join(pd.get_dummies(data[column], drop_first=True, prefix=column))
+        data.drop(column, inplace=True, axis=1)
+        columns.remove(column)
+
+    return data, columns, index_missing, index_train
