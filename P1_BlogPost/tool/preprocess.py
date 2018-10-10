@@ -5,7 +5,8 @@ import pandas as pd
 import numpy as np
 from collections import defaultdict
 from sklearn.model_selection import train_test_split, GridSearchCV
-from sklearn.metrics import make_scorer, fbeta_score, f1_score
+from sklearn.metrics import make_scorer, fbeta_score, f1_score, r2_score, mean_squared_error
+from sklearn.decomposition import  PCA
 
 def parse_money(data, column, dtype="float32"):
     sep_option = ["$", ","]
@@ -80,7 +81,7 @@ def predict_category_value(data, columns, pred_column, algo, params, cv=2):
     X = data.loc[index_train, data.select_dtypes(exclude=["object"]).columns]
     
     train_X, test_X, train_y, test_y = train_test_split(
-        X, data.loc[index_train, pred_column], test_size=0.5, random_state=42,
+        X, data.loc[index_train, pred_column], test_size=0.2, random_state=42,
     )
 
     fscore = make_scorer(fbeta_score, beta=0.6, average="micro")
@@ -140,3 +141,79 @@ def dummy_variables(data, columns, pred_column):
         columns.remove(column)
 
     return data, columns, index_missing, index_train
+
+def predict_numerical_value(
+    data, columns, pred_column, algo, params, cv=2, pca_components=None, 
+    metrics_func=None
+):
+    """predict the missing value in pred_column
+
+    Parameters:
+        data: dataframe
+            original data
+        columns: list
+            List contains column those will be used to predict value
+        pred_column: string
+            Need to be predicted missing value in the column
+        algo: objects about algorithm
+            List contains algorithm that will be used to train the model,
+            and predict the missing value
+        params: dict
+            It is used to search the best parameters by gridsearchcv
+        cv: int
+            It is uded to a parameter in GridSearchCV
+        pca_compnents: int default None
+            If it is a validate int number, there is a pca decomposition step
+        metircs_func: Callable default None
+            Use another metrics to measure the model, if it exists
+    Results:
+        pred_column value
+    """
+    data = data.copy()
+    new_data, new_columns, index_missing, index_train = dummy_variables(
+        data, columns, pred_column
+    )
+    
+    train_X, test_X, train_y, test_y = train_test_split(
+        new_data.loc[index_train, new_columns], new_data.loc[index_train, pred_column], 
+        test_size=0.2, random_state=42
+    )
+    predict_X = new_data.loc[index_missing, new_columns]
+
+    if pca_components:
+        pca = PCA(n_components=pca_components)
+        pca.fit(train_X)
+        train_X = pca.transform(train_X)
+        test_X = pca.transform(test_X)
+        predict_X = pca.transform(predict_X)
+
+        print("After decomposition with {} components PCA.".format(pca_components))
+
+
+    # make the score metrics, basic metrics is r2 and mse
+    score = {
+         "mse": make_scorer(mean_squared_error, greater_is_better=False),
+        "r2": make_scorer(r2_score, greater_is_better=True) 
+    }
+
+    if metrics_func:
+        for key, value in metrics_func:
+            score[key] = value
+    
+    if params:
+        algorithm = GridSearchCV(
+            algo, param_grid=params, scoring=score, iid=False, cv=cv, refit="mse"
+        )
+    else:
+        algorithm = algo
+    
+    algorithm.fit(train_X, train_y)
+    print("The train data r2 score is {:0.4f}.\nTest mse score is {:0.4f}. ".format(
+        r2_score(train_y, algorithm.predict(train_X)), 
+        mean_squared_error(test_y, algorithm.predict(test_X)))
+    )
+    
+    y_missing = algorithm.predict(predict_X)
+    data.loc[index_missing, pred_column] = y_missing
+    
+    return data.loc[:, pred_column]
