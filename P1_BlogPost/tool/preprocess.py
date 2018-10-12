@@ -217,3 +217,31 @@ def predict_numerical_value(
     data.loc[index_missing, pred_column] = y_missing
     
     return data.loc[:, pred_column]
+
+def rmspe(y_true, y_predict):
+    """Measurement metric
+    Use the rmspe to validate model
+
+    Parameters:
+        y_true: array
+            True labels
+        y_predict: array
+            Predict labels
+        
+    Results:
+        result: float
+            Evaluation score RMSPE
+    """
+    if not(isinstance(y_predict, (np.ndarray, pd.core.series.Series)) and \
+        isinstance(y_true, (np.ndarray, pd.core.series.Series))):
+        raise TypeError("The type of y_true and y_predict must be ndarray, Series!")
+
+    if len(y_true) != len(y_predict):
+        raise ValueError("Length between y_predict and y_true isn't same!")
+
+    n = len(y_predict)
+    percent = (y_true - y_predict) / y_true
+
+    score = np.sqrt(np.power(percent, 2).sum() * 1/n)
+    
+    return score
