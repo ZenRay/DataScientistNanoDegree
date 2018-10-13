@@ -103,7 +103,7 @@ def predict_category_value(data, columns, pred_column, algo, params, cv=2):
     
     return data.loc[:, pred_column]
 
-def dummy_variables(data, columns, pred_column):
+def dummy_variables(data, columns, pred_column=None):
     """Deal with the dummy variables
     Convert the dummy variables into values
 
@@ -112,7 +112,7 @@ def dummy_variables(data, columns, pred_column):
             original data
         columns: list
             List contains column those will be used to predict value
-        pred_column: string
+        pred_column: string default None
             Need to be predicted missing value in the column
         algo: objects about algorithm
             List contains algorithm that will be used to train the model,
@@ -124,14 +124,20 @@ def dummy_variables(data, columns, pred_column):
     Results:
         data: dataframe
             Dummy variables is converted into values
+        columns: 
         index_missing: Index
             pred_column with missing values index
         index_train: Index
             columns with non_missing values index is used to train model
     """
-    data = data[columns + [pred_column]].copy()
-    index_missing = data[pred_column].isnull()
-    index_train = data[pred_column].notnull()
+    if pred_column:
+        data = data[columns + [pred_column]].copy()
+        index_missing = data[pred_column].isnull()
+        index_train = data[pred_column].notnull()
+    else:
+        data = data[columns].copy()
+        index_missing = None
+        index_train = None
 
     category_column = data[columns].select_dtypes("object").columns
 
