@@ -3,6 +3,7 @@
 
 import pandas as pd
 import numpy as np
+import warnings
 from collections import defaultdict
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.metrics import make_scorer, fbeta_score, f1_score, r2_score, mean_squared_error
@@ -82,7 +83,7 @@ def option_count(data, option_column, value_column, options):
 
     return result
 
-def predict_category_value(data, columns, pred_column, algo, params, cv=2):
+def _predict_category_value(data, columns, pred_column, algo, params, cv=2):
     """predict the missing value in pred_column
 
     Parameters:
@@ -105,7 +106,7 @@ def predict_category_value(data, columns, pred_column, algo, params, cv=2):
     data = data[columns + [pred_column]].copy()
     index_missing = data[pred_column].isnull()
     index_train = data[pred_column].notnull()
-
+    result = data[pred_column].copy()
 
     # dummy variable steps
     category_column = data[columns].select_dtypes("object").columns
@@ -135,9 +136,9 @@ def predict_category_value(data, columns, pred_column, algo, params, cv=2):
         data.loc[index_missing, data.select_dtypes(exclude=["object"]).columns]
     )
     
-    data.loc[index_missing, pred_column] = y_missing
+    result.loc[index_missing] = y_missing
     
-    return data.loc[:, pred_column]
+    return result
 
 def dummy_variables(data, columns, pred_column=None):
     """Deal with the dummy variables
@@ -183,6 +184,62 @@ def dummy_variables(data, columns, pred_column=None):
         columns.remove(column)
 
     return data, columns, index_missing, index_train
+
+def predict_category_columns(
+    data, columns, target_columns, algorithm, params, silence=True, cv=2, 
+    inplace=True
+    ):
+    """predict the missing value in target_columns
+
+    Parameters:
+        data: dataframe
+            original data
+        columns: list
+            List contains column those will be used to predict value
+        target_columns: string or list
+            Need to be predicted missing value in the column
+        algorithm: objects about algorithm
+            List contains algorithm that will be used to train the model,
+            and predict the missing value
+        params: dict
+            It is used to search the best parameters by gridsearchcv
+        cv: int
+            It is uded to a parameter in GridSearchCV
+        inplace: boolean default True
+            If True, fill in place. 
+    Results:
+        DataFrame, or Series
+            target_columns value
+    """
+    result = pd.DataFrame()
+    if slice:
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            if isinstance(target_columns, str):
+                result[target_columns] = _predict_category_value(
+                    data, columns, target_columns, algorithm, params, cv
+                )
+            elif isinstance(target_columns, list):
+                for target_column in target_columns:
+                    result[target_column] = _predict_category_value(
+                        data, columns, target_column, algorithm, params, cv
+                    )
+    else:
+        if isinstance(target_columns, str):
+            result[target_columns] = _predict_category_value(
+                data, columns, target_columns, algorithm, params, cv
+            )
+        elif isinstance(target_columns, list):
+            for target_column in target_columns:
+                result[target_column] = _predict_category_value(
+                    data, columns, target_column, algorithm, params, cv
+                )
+
+    if inplace:
+        data[target_columns] = result[target_columns]
+        return
+    else:
+        return result
 
 def predict_numerical_value(
     data, columns, pred_column, algo, params, cv=2, pca_components=None, 
