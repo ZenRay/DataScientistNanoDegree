@@ -8,7 +8,7 @@ from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.metrics import make_scorer, fbeta_score, f1_score, r2_score, mean_squared_error
 from sklearn.decomposition import  PCA
 
-def parse_money(data, column, dtype="float32"):
+def _parse_money(data, column, dtype="float32"):
     sep_option = ["$", ","]
     replacement = ""
 
@@ -16,6 +16,42 @@ def parse_money(data, column, dtype="float32"):
         data[column] = data[column].str.replace(i, replacement)
 
     return data[column].astype(dtype)
+
+def money_columns(data, columns, inplace=True, dtype="float32"):
+    '''Convert the object contains money to float dtype
+
+    Paremeters:
+        data: dataframe 
+            where you want to search value from 
+        columns: list or string
+            Columns time object need to parsed to datetime
+        inplace: boolean default True
+            If True, fill in place. 
+        dtype: dtype string
+            The string is pandas dtype
+    Result:
+        Dataframe
+            data is parsed
+    '''
+    if isinstance(columns, str):
+        if inplace:
+            data[columns] = _parse_money(data, columns, dtype=dtype)
+            return 
+        else:
+            return _parse_money(data, columns, dtype=dtype)
+    elif isinstance(columns, list):
+        if inplace:
+            for column in columns:
+                data[column] = _parse_money(data, column, dtype=dtype)
+            
+            return
+        else:
+            result = pd.DataFrame()
+            for column in columns:
+                result[column] = _parse_money(data, column, dtype=dtype)
+            return result
+    else:
+        raise TypeError("Parameter columns must be list or string")
 
 def option_count(data, option_column, value_column, options):
     '''Count the checkbox option value
@@ -253,7 +289,7 @@ def rmspe(y_true, y_predict):
     return score
 
 def converted_time(data, columns, inplace=True):
-    '''Count the time object to datetime type
+    '''Convert the time object to datetime type
 
     Paremeters:
         data: dataframe 
