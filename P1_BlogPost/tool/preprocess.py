@@ -251,3 +251,38 @@ def rmspe(y_true, y_predict):
     score = np.sqrt(np.power(percent, 2).sum() * 1/n)
     
     return score
+
+def converted_time(data, columns, inplace=True):
+    '''Count the time object to datetime type
+
+    Paremeters:
+        data: dataframe 
+            where you want to search value from 
+        columns: list or string
+            Columns time object need to parsed to datetime
+        inplace: boolean default True
+            If True, fill in place. 
+    Result:
+        Dataframe
+            data is parsed
+    '''
+
+    if isinstance(columns, str):
+        if inplace:
+            data[columns] = pd.to_datetime(data[columns])
+            return
+        else:
+            return pd.to_datetime(data[columns])
+    elif isinstance(columns, list):
+        if inplace:
+            for column in columns:
+                data[column] = pd.to_datetime(data[column])
+            return 
+        else:
+            result = pd.DataFrame()
+            
+            for column  in columns:
+                result[column] = pd.to_datetime(data[column])
+            return result
+    else:
+        raise TypeError("Parameter columns must be list or string")
