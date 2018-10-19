@@ -1,6 +1,7 @@
 import sys
 import pandas as pd
 from sqlalchemy import create_engine
+import os
 
 def load_data(messages_filepath, categories_filepath):
     messages = pd.read_csv(messages_filepath)
@@ -35,7 +36,9 @@ def clean_data(df):
     return df
 
 def save_data(df, database_filename):
-    pass  
+    engine = create_engine("sqlite:///" + database_filename)
+    db_name = os.path.basename(database_filename).split(".")[0]
+    df.to_sql(db_name, engine, index=False)  
 
 
 def main():
