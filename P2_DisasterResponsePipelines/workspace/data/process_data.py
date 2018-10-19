@@ -12,8 +12,27 @@ def load_data(messages_filepath, categories_filepath):
     return df
 
 def clean_data(df):
-    pass
+    # extract the categories info
+    category = df["categories"].str.split(";", expand=True)
 
+    category_colnames = category.iloc[0, :].apply(lambda x: x.split("-")[0])
+    category.columns = category_colnames
+
+    for column in category:
+        # parse the value from the string
+        category[column] = category[column].apply(lambda x: x.split("-")[1])
+        category[column] = pd.to_numeric(category[column])
+
+    # concate the category info and the dataframe
+    df.drop("categories", axis=1, inplace=True)
+
+    df = pd.concat([df, category], axis=1)
+
+    # drop duplicates
+    if df.duplicated().sum() > 0:
+        df.drop_duplicates(inplace=True)
+
+    return df
 
 def save_data(df, database_filename):
     pass  
