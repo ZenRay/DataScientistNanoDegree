@@ -1,8 +1,29 @@
 import sys
+import pandas as pd
+from sqlalchemy import create_engine
+import re
 
+import nltk
+from nltk.tokenize import word_tokenize, sent_tokenize
+from nltk.corpus import stopwords
+from nltk.stem.wordnet import WordNetLemmatizer
+
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.multioutput import MultiOutputClassifier
+from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.pipeline import Pipeline, FeatureUnion, TransformerMixin
+from sklearn.feature_extraction.text import CountVectorizer, BaseEstimator, TfidfTransformer
+from sklearn.metrics import classification_report
 
 def load_data(database_filepath):
-    pass
+    engine = create_engine("sqlite:///" + database_filepath)
+    df = pd.read_sql("SELECT * FROM InsertTableName;", engine)
+    X = df["message"].values
+    y_transform = pd.get_dummies(df["genre"])
+    category_names = y_transform.columns.tolist()
+    Y = y_transform.values
+
+    return X, Y, category_names
 
 
 def tokenize(text):
