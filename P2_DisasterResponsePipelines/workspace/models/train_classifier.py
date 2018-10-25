@@ -2,6 +2,7 @@ import sys
 import pandas as pd
 from sqlalchemy import create_engine
 import re
+import pickle
 
 import nltk
 from nltk.tokenize import word_tokenize, sent_tokenize
@@ -27,19 +28,51 @@ def load_data(database_filepath):
 
 
 def tokenize(text):
-    pass
+    # normalize text
+    text = re.sub(r"[^a-zA-Z0-9]", " ", text.lower())
+
+    # tokenize text
+    tokens = word_tokenize(text)
+
+    # lemmatize and remove stopwords
+    lemmatizer = WordNetLemmatizer()
+    stop_words = stopwords.words("english")
+
+    result = []
+
+    for token in tokens:
+        if token in stop_words:
+            result.append(lemmatizer.lemmatize(token))
+    
+    return result
 
 
 def build_model():
-    pass
+    # initial basic model
+    forest = RandomForestClassifier(random_state=42, n_jobs=4)
 
+    # create pipeline
+    pipeline = Pipeline([
+        ("text_pipeline", Pipeline([
+            ("vect", CountVectorizer(tokenizer=tokenize)),
+            ("tfidf", TfidfTransformer())
+        ])),
+
+        ("clf", MultiOutputClassifier(forest, n_jobs=4))
+    ])
+
+    return pipeline
 
 def evaluate_model(model, X_test, Y_test, category_names):
-    pass
+    y_pred = model.predict(X_test)
+    print("Evaluate the model:\n")
+    print(classification_report(Y_test, y_pred, target_names=category_names))
 
 
 def save_model(model, model_filepath):
-    pass
+    # write the model object
+    with open(model_filepath, "wb") as file:
+        pickle.dump(model, file)
 
 
 def main():
