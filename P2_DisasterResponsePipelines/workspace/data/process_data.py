@@ -38,7 +38,10 @@ def clean_data(df):
 def save_data(df, database_filename):
     engine = create_engine("sqlite:///" + database_filename)
     db_name = os.path.basename(database_filename).split(".")[0]
-    df.to_sql(db_name, engine, index=False)  
+    try:
+        df.to_sql(db_name, engine, index=False)
+    except ValueError as error:
+        print(error)
 
 
 def main():
