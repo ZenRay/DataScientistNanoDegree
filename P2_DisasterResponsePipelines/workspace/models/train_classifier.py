@@ -1,7 +1,11 @@
 import sys
+# import libraries
 import pandas as pd
+import numpy as np
 from sqlalchemy import create_engine
 import re
+from IPython import display
+import warnings
 import pickle
 
 import nltk
@@ -11,18 +15,17 @@ from nltk.stem.wordnet import WordNetLemmatizer
 
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.multioutput import MultiOutputClassifier
-from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.pipeline import Pipeline, FeatureUnion, TransformerMixin
+from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.feature_extraction.text import CountVectorizer, BaseEstimator, TfidfTransformer
-from sklearn.metrics import classification_report
+from sklearn.metrics import f1_score, recall_score, precision_score, classification_report
 
 def load_data(database_filepath):
     engine = create_engine("sqlite:///" + database_filepath)
-    df = pd.read_sql("SELECT * FROM InsertTableName;", engine)
+    df = pd.read_sql("SELECT * FROM DisasterResponse;", engine)
     X = df["message"].values
-    y_transform = pd.get_dummies(df["genre"])
-    category_names = y_transform.columns.tolist()
-    Y = y_transform.values
+    category_names = df.iloc[:, 4:].columns.tolist()
+    Y = df.iloc[:, 4:].values
 
     return X, Y, category_names
 
@@ -61,12 +64,32 @@ def build_model():
         ("clf", MultiOutputClassifier(forest, n_jobs=4))
     ])
 
-    return pipeline
+    # define parameters
+    params = {
+        "text_pipeline__vect__max_features": (5000, 10000),
+        "clf__estimator__n_estimators": [50, 100, 150],
+        "clf__estimator__criterion": ["gini", "entropy"],
+        "clf__estimator__max_depth": [4, 6, 10],
+    }
+
+    # model = GridSearchCV(pipeline, param_grid=params, cv=3)
+    model = pipeline
+    return model
 
 def evaluate_model(model, X_test, Y_test, category_names):
+    # predict the values
     y_pred = model.predict(X_test)
-    print("Evaluate the model:\n")
-    print(classification_report(Y_test, y_pred, target_names=category_names))
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+
+        # display the report
+        for index, column in enumerate(category_names):
+            report = classification_report(
+                Y_test[:, index], y_pred[:, index], labels=np.arange(1), target_names=[column], output_dict=True, digits=2
+            )
+            print("{0:<25}  Precision:{1: =6.3f}   Recall:{2:< 5.3f}  F1 score:{3: 5.3f}".format(
+                column, report[column]["precision"], report[column]["recall"], report[column]["f1-score"]
+            ))
 
 
 def save_model(model, model_filepath):
