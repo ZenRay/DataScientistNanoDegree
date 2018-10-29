@@ -72,9 +72,20 @@ def build_model():
         "clf__estimator__max_depth": [4, 6, 10],
     }
 
-    # model = GridSearchCV(pipeline, param_grid=params, cv=3)
-    model = pipeline
-    return model
+    # choose a method to build model
+    print("Hint: GridSearchCV will takes more time!\n")
+    chose_option = input("Choose the GridSearchCV(Yes or No): ").lower()
+    while True:
+        if chose_option in ["yes", "y"]:
+            model = GridSearchCV(pipeline, param_grid=params, cv=3)
+        elif chose_option in ["no", "n"]:
+            model = pipeline
+        else:
+            print("Choose a validate option!")
+            model = False
+        
+        if model:
+            return model
 
 def evaluate_model(model, X_test, Y_test, category_names):
     # predict the values
