@@ -34,7 +34,7 @@ I am curious that which factors motivate the travelers' reservation decision. Be
 
 ## Results <a id="results"></a>
 The main finding of the project can be found at 
-[How Do U Arrange Accommodation](https://medium.com/@RayZen/how-do-u-arrange-accommodation-2556ef4c4381)
+[Optimize Filter To Reserve Accommodation](https://medium.com/@RayZen/how-do-u-arrange-accommodation-2556ef4c4381)
 
 ## Licensing, Achknowledgements<a id="licensing"></a>
 
