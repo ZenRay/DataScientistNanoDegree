@@ -21,6 +21,24 @@ from sklearn.feature_extraction.text import CountVectorizer, BaseEstimator, Tfid
 from sklearn.metrics import f1_score, recall_score, precision_score, classification_report
 
 def load_data(database_filepath):
+    """Load the specific database
+
+    Load the data from the specific file.
+
+    Parameters:
+    -----------
+    database_filepath: string
+        File path of the specific database
+    
+    Results:
+    ----------
+    X: ndarray
+        Ndarray values store the message information
+    Y: ndarray
+        Ndarray values store the the multi class information
+    category_names: list
+        List contains the multi class string
+    """
     engine = create_engine("sqlite:///" + database_filepath)
     df = pd.read_sql("SELECT * FROM DisasterResponse;", engine)
     X = df["message"].values
@@ -31,6 +49,21 @@ def load_data(database_filepath):
 
 
 def tokenize(text):
+    """Tokenize the text 
+    
+    Tokenize the text information by using word_tokenize, WordNetLemmatizer, 
+    remove words that is in stopwords
+    
+    Parameters:
+    -----------
+    text: string
+        String contains the message information
+    
+    Results:
+    ----------
+    result: list
+        List contains strings parsed from the text
+    """
     # normalize text
     text = re.sub(r"[^a-zA-Z0-9]", " ", text.lower())
 
@@ -51,6 +84,10 @@ def tokenize(text):
 
 
 def build_model():
+    """Build model
+
+    Create the model by using pipeline
+    """
     # initial basic model
     forest = RandomForestClassifier(random_state=42, n_jobs=4)
 
@@ -88,6 +125,21 @@ def build_model():
             return model
 
 def evaluate_model(model, X_test, Y_test, category_names):
+    """Display the model evaluation report
+
+    Evaluate the model by using the test dataset
+
+    Parameters:
+    -----------
+    model: model object
+        Mode built in the function build_model
+    X_test: Ndarray 
+        Ndarray is a test dataset information to predict value
+    Y_test: Ndarray
+        True multi class values in the ndarray
+    category_names: list
+        List contains the multi class string
+    """
     # predict the values
     y_pred = model.predict(X_test)
     with warnings.catch_warnings():
@@ -104,6 +156,18 @@ def evaluate_model(model, X_test, Y_test, category_names):
 
 
 def save_model(model, model_filepath):
+    """Store the model
+    
+    Store the model in the specific file
+
+    Parameters:
+    -----------
+    model: model object
+        Mode built in the function build_model
+    
+    model_filepath: string
+        File path is used to store the model
+    """
     # write the model object
     with open(model_filepath, "wb") as file:
         pickle.dump(model, file)

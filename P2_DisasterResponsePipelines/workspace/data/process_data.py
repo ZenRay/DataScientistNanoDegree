@@ -4,6 +4,22 @@ from sqlalchemy import create_engine
 import os
 
 def load_data(messages_filepath, categories_filepath):
+    """Load the original dataset
+
+    Load the dataset from the specific file, and transform the dataset into the 
+    same dataframe
+
+    Parameters:
+    -----------
+    messages_filepath: string
+        File path is about messages data
+    categories_filepath: string
+        File path is about categories data
+    
+    Results:
+    df: DataFrame
+        Dataset is loaded from the messages and the categories dataset
+    """
     messages = pd.read_csv(messages_filepath)
     categories = pd.read_csv(categories_filepath)
 
@@ -13,6 +29,18 @@ def load_data(messages_filepath, categories_filepath):
     return df
 
 def clean_data(df):
+    """Wrangle data
+    
+    Wrangle the dataframe
+
+    Parameters:
+    df: DataFrame
+        DataFrame contains all data infromation
+    
+    Returns:
+    df: DataFrame
+        After cleaning the dataframe, return itself
+    """
     # extract the categories info
     category = df["categories"].str.split(";", expand=True)
 
@@ -36,6 +64,17 @@ def clean_data(df):
     return df
 
 def save_data(df, database_filename):
+    """Save the dataset
+
+    After cleaning the dataset, store the data into the SQLite database
+
+    Paramters:
+    ----------
+    df: DataFrame
+        Cleaning data
+    database_filename: String
+        File path is about the database stored the data
+    """
     engine = create_engine("sqlite:///" + database_filename)
     db_name = os.path.basename(database_filename).split(".")[0]
     try:
