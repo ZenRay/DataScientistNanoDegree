@@ -11,7 +11,7 @@ class Wrangle:
     Wrangle the data about the capstone project
     """
     
-    def __init__(self, data, columns):
+    def __init__(self, data, columns:list):
         """Initialize an instance
         Initialize the data and the columns to deal with specific data
 
@@ -22,7 +22,7 @@ class Wrangle:
         columns: label or labels
             The labels are abnormal features in the data
         """
-        self.data = data
+        self.data = data.loc[:, columns]
         self.columns = columns
 
     def convert_time(self, column, fix=True):
