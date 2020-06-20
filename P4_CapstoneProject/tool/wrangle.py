@@ -49,3 +49,28 @@ class Wrangle:
             self.columns.remove(column)
         
         return result
+
+
+def fix_missing_value(x, sep=","):
+    """Adjust the misssing value in description feature
+
+    Parameters:
+    -----------
+    data: string
+        A string contains a sep character
+    sep: string
+        A character is used as a seperator
+    
+    Results:
+    -----------
+    result: list
+        A list contain the validate information
+    """
+    result = []
+    if pd.notnull(x):
+        if isinstance(x, int):
+            result.append(x)
+        else:
+            result.extend([int(i.strip()) for i in x.split(sep)])
+    
+    return result
